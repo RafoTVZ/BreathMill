@@ -1,23 +1,20 @@
 # BreathMill – IoT vjetrenjača za trening stabilnog daha
 
+> BreathMill je projekt digitalnog spirometra razvijen u sklopu kolegija Razvoj ugradbenih sustava. Cilj projekta je kroz jednostavan i vizualno razumljiv scenarij vjetrenjače pomoći korisniku u vježbanju stabilnog i kontroliranog izdisaja.
+
 ## Opis projekta
 
-BreathMill je IoT digitalni spirometar namijenjen vježbanju stabilnog i kontroliranog izdisaja. Projekt koristi kreativni scenarij vjetrenjače: korisnikov dah pokreće virtualnu vjetrenjaču, a cilj je održavati stabilan protok zraka u zadanoj ciljnoj zoni tijekom 5 sekundi.
+Ovaj projekt je rezultat timskog rada u sklopu projektnog zadatka kolegija Razvoj ugradbenih sustava na Tehničkom veleučilištu u Zagrebu.
 
-Zbog ograničenja laboratorijske simulacije, stvarni senzor protoka zraka zamijenjen je potenciometrom koji simulira jačinu daha korisnika. Pomicanjem potenciometra mijenja se vrijednost simuliranog protoka, dok ESP32 obrađuje signal, prikazuje stanje vježbe na OLED zaslonu i određuje je li pokušaj uspješan.
+BreathMill je IoT digitalni spirometar koji koristi ESP32 mikrokontroler, OLED zaslon i potenciometar za simulaciju protoka zraka. Zbog ograničenja laboratorijske simulacije, stvarni senzor protoka zraka zamijenjen je potenciometrom. Pomicanjem potenciometra simulira se jačina daha korisnika.
 
-## Platforma
+Projekt koristi kreativni scenarij vjetrenjače: korisnikov dah pokreće virtualnu vjetrenjaču, a cilj je održati stabilan protok zraka u ciljnoj zoni tijekom 5 sekundi. Ako je protok preslab, vjetrenjača se okreće presporo. Ako je protok stabilan, vjetrenjača radi optimalno. Ako protok prijeđe 1200 ml/s, pokušaj se poništava zbog prekoračenja sigurnosne granice.
 
-Projekt se temelji na sljedećim komponentama:
+Motivacija projekta je prikazati medicinski koncept vježbe disanja kroz jednostavno i razumljivo korisničko sučelje. Vizualna povratna informacija na OLED zaslonu korisniku pomaže razumjeti koliko je njegov izdisaj stabilan.
 
-- ESP32 mikrokontroler
-- OLED zaslon
-- potenciometar za simulaciju protoka zraka
-- Wokwi simulacijsko okruženje
+## Funkcijski zahtjevi
 
-## Funkcionalnosti uređaja
-
-Sustav će omogućiti:
+Sustav mora omogućiti:
 
 - periodično očitavanje vrijednosti potenciometra
 - pretvorbu vrijednosti potenciometra u simulirani protok daha
@@ -30,35 +27,61 @@ Sustav će omogućiti:
 - poništavanje pokušaja ako protok prijeđe 1200 ml/s
 - izračun ukupnog volumena izdisaja numeričkom integracijom protoka kroz vrijeme
 - prikaz rezultata korisnika nakon završetka pokušaja
+- prikaz animirane vjetrenjače čija se brzina mijenja ovisno o protoku daha
 
-## Logika vježbe
+## Tehnologije
 
-Cilj korisnika je održavati protok daha u ciljnoj zoni. Ako je protok preslab, vjetrenjača se okreće presporo i pokušaj se ne smatra uspješnim. Ako je protok stabilan i dovoljno jak, vjetrenjača se okreće optimalnom brzinom. Ako protok prijeđe 1200 ml/s, pokušaj se poništava jer se smatra da je korisnik prejakim izdisajem izazvao nestabilan protok.
+Projekt koristi sljedeće tehnologije i komponente:
 
-Uspješna vježba ostvaruje se kada su zadovoljeni sljedeći uvjeti:
+- ESP32 mikrokontroler
+- OLED zaslon
+- potenciometar za simulaciju protoka zraka
+- Wokwi simulator
+- Arduino/C++ razvojno okruženje
+- GitHub za verzioniranje koda i dokumentaciju
 
-- protok je najmanje 900 ml/s
-- protok ne prelazi 1200 ml/s
-- signal ostaje stabilan unutar ciljane zone
-- uvjeti traju neprekidno 5 sekundi
+## Instalacija i pokretanje
 
-## OLED prikaz
+Projekt će se razvijati i testirati u Wokwi simulatoru.
 
-Na OLED zaslonu prikazivat će se:
+Osnovni koraci za pokretanje:
 
-- animirana vjetrenjača čija se brzina mijenja ovisno o protoku
-- trenutna vrijednost protoka
-- pragovi od 600 ml/s, 900 ml/s i 1200 ml/s
-- indikator stabilnosti protoka
-- brojač stabilnih sekundi
-- završni rezultat pokušaja
+1. Otvoriti Wokwi projekt.
+2. Pokrenuti simulaciju.
+3. Pomicati potenciometar kako bi se simulirao protok daha.
+4. Pratiti prikaz vjetrenjače, protoka i rezultata na OLED zaslonu.
+5. Provjeriti serijski ispis za dodatne informacije o stanju sustava.
 
-## Napredna funkcionalnost
+## Članovi tima
 
-Kao napredna funkcionalnost implementirat će se model inercije vjetrenjače. Brzina vrtnje lopatica neće se mijenjati trenutno, nego postupno, čime se simulira masa vjetrenjače i otpor zraka. Time korisnik dobiva jasniji vizualni biofeedback o stabilnosti daha.
+- Antonio Rafajec, Antonela Miletić – razvoj programskog rješenja, dokumentacija, Wokwi simulacija, OLED prikaz, testiranje
 
-Moguće dodatne nadogradnje uključuju spremanje najboljeg rezultata u trajnu memoriju i slanje rezultata putem Wi-Fi veze.
+## Kontribucije
 
-## Sažetak
+Rad na projektu dijeli se prema funkcionalnim cjelinama:
 
-BreathMill prikazuje digitalni spirometar kroz jednostavan i razumljiv scenarij vjetrenjače. Projekt povezuje medicinski uvjet stabilnog protoka daha s vizualnim prikazom na OLED zaslonu, čime korisnik dobiva povratnu informaciju o kvaliteti izdisaja.
+- razvoj logike očitanja i filtriranja signala
+- razvoj logike uspješne/neuspješne vježbe
+- razvoj OLED prikaza i animacije vjetrenjače
+- izrada dokumentacije
+- testiranje i provjera rada u Wokwi simulatoru
+
+Članovi tima komuniciraju putem dogovorenih komunikacijskih kanala, a promjene se prate kroz GitHub commitove.
+
+## Kodeks ponašanja
+
+Članovi tima obvezuju se na odgovorno, korektno i profesionalno ponašanje tijekom rada na projektu.
+
+Očekuje se:
+
+- poštivanje dogovorenih rokova
+- jasna komunikacija među članovima tima
+- konstruktivno rješavanje problema
+- poštivanje tuđeg rada i doprinosa
+- dokumentiranje vlastitih promjena
+
+## Licenca
+
+Projekt je izrađen u obrazovne svrhe u sklopu kolegija Razvoj ugradbenih sustava na Tehničkom veleučilištu u Zagrebu.
+
+Materijali i korištene biblioteke podliježu vlastitim licencama.
