@@ -8,7 +8,7 @@ Ovaj projekt je rezultat timskog rada u sklopu projektnog zadatka kolegija Razvo
 
 BreathMill je IoT digitalni spirometar koji koristi ESP32 mikrokontroler, OLED zaslon i potenciometar za simulaciju protoka zraka. Zbog ograničenja laboratorijske simulacije, stvarni senzor protoka zraka zamijenjen je potenciometrom. Pomicanjem potenciometra simulira se jačina daha korisnika.
 
-Projekt koristi kreativni scenarij vjetrenjače: korisnikov dah pokreće virtualnu vjetrenjaču, a cilj je održati stabilan protok zraka u ciljnoj zoni tijekom 5 sekundi. Ako je protok preslab, vjetrenjača se okreće presporo. Ako je protok stabilan, vjetrenjača radi optimalno. Ako protok prijeđe 1200 ml/s, pokušaj se poništava zbog prekoračenja sigurnosne granice.
+Projekt koristi kreativni scenarij vjetrenjače: korisnikov dah pokreće virtualnu vjetrenjaču, a cilj je održati stabilan protok zraka u ciljnoj zoni tijekom 5 sekundi. Ako je protok preslab, vjetrenjača se okreće presporo. Ako je protok stabilan, vjetrenjača radi optimalno. Ako protok prijeđe 1200 ml/s, vjetrenjača se "pokvari" i pokušaj se poništava zbog prekoračenja sigurnosne granice.
 
 Motivacija projekta je prikazati medicinski koncept vježbe disanja kroz jednostavno i razumljivo korisničko sučelje. Vizualna povratna informacija na OLED zaslonu korisniku pomaže razumjeti koliko je njegov izdisaj stabilan.
 
@@ -55,6 +55,10 @@ Osnovni koraci za pokretanje:
 ## Članovi tima
 
 - Antonio Rafajec, Antonela Miletić – razvoj programskog rješenja, dokumentacija, Wokwi simulacija, OLED prikaz, testiranje
+
+## Link na projekt
+
+- https://wokwi.com/projects/466356005804855297
 
 ## Kontribucije
 

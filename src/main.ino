@@ -1,200 +1,334 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 #define POT_PIN 34
+#define RESET_BTN 25
 
+// ================= FLOW MODEL =================
 #define ADC_CENTER 2048
-#define MAX_FLOW 1300.0
 #define DEAD_ZONE 80
-
-#define FILTER_ALPHA 0.2
+#define MAX_FLOW 1300.0
 
 #define FLOW_LEVEL_1 600.0
 #define FLOW_LEVEL_2 900.0
-#define FLOW_LIMIT 1200.0
+#define FLOW_LIMIT   1200.0
 
-#define REQUIRED_STABLE_TIME_MS 5000
-#define SAMPLE_INTERVAL_MS 200
+#define EMA_ALPHA 0.2
+#define SAMPLE_MS 200
+#define REQUIRED_STABLE_MS 5000
 
-float filteredFlow = 0.0;
-float totalVolume = 0.0;
+// ================= STATE =================
+float filteredFlow = 0;
+float previousFlow = 0;
+float totalVolume = 0;
 
-unsigned long lastSampleTime = 0;
-unsigned long stableStartTime = 0;
+unsigned long lastSample = 0;
+unsigned long stableStart = 0;
 
-bool stableTimerRunning = false;
-bool exerciseSuccess = false;
-bool exerciseFailed = false;
+bool stable = false;
+bool success = false;
+bool failed = false;
+bool brokenWindmill = false;
 
-float calculateFlow(int rawValue) {
-  int offset = rawValue - ADC_CENTER;
+// ================= WINDMILL =================
+float currentSpeed = 0;
+int frame = 0;
+unsigned long lastAnim = 0;
 
-  if (abs(offset) < DEAD_ZONE) {
-    return 0.0;
-  }
+// ================= RESET =================
+void resetExercise()
+{
+  filteredFlow = 0;
+  previousFlow = 0;
+  totalVolume = 0;
 
-  if (offset < 0) {
-    return 0.0;
-  }
+  stable = false;
+  success = false;
+  failed = false;
 
-  float flow = (offset / 2047.0) * MAX_FLOW;
+  stableStart = 0;
 
-  if (flow > MAX_FLOW) {
-    flow = MAX_FLOW;
-  }
-
-  return flow;
+  brokenWindmill = false;
 }
 
-float applyEmaFilter(float newValue) {
-  filteredFlow = FILTER_ALPHA * newValue + (1.0 - FILTER_ALPHA) * filteredFlow;
+// ================= FLOW =================
+float calculateFlow(int raw)
+{
+  int offset = raw - ADC_CENTER;
+
+  if (abs(offset) < DEAD_ZONE) return 0;
+
+  if (offset < 0) return 0;
+
+  return (offset / 2047.0) * MAX_FLOW;
+}
+
+float ema(float in)
+{
+  filteredFlow = EMA_ALPHA * in + (1 - EMA_ALPHA) * filteredFlow;
   return filteredFlow;
 }
 
-String getDirection(int rawValue) {
-  int offset = rawValue - ADC_CENTER;
+// ================= LOGIKA =================
+void updateLogic(float flow, float dt)
+{
+  if (success || failed) return;
 
-  if (abs(offset) < DEAD_ZONE) {
-    return "MIROVANJE";
-  }
+  if (flow >= FLOW_LIMIT)
+  {
+    failed = true;
+    brokenWindmill = true;
 
-  if (offset > 0) {
-    return "UDAH";
-  }
-
-  return "IZDAH";
-}
-
-String getFlowZone(float flow) {
-  if (flow >= FLOW_LIMIT) {
-    return "TOO_HIGH";
-  }
-
-  if (flow >= FLOW_LEVEL_2) {
-    return "TARGET";
-  }
-
-  if (flow >= FLOW_LEVEL_1) {
-    return "MEDIUM";
-  }
-
-  return "LOW";
-}
-
-void resetExercise() {
-  stableTimerRunning = false;
-  stableStartTime = 0;
-  exerciseSuccess = false;
-  exerciseFailed = false;
-  totalVolume = 0.0;
-  filteredFlow = 0.0;
-}
-
-void updateVolume(float flow, float deltaTimeSeconds, String direction) {
-  if (!exerciseSuccess && !exerciseFailed && direction == "UDAH") {
-    totalVolume += flow * deltaTimeSeconds;
-  }
-}
-
-void updateExerciseState(float flow) {
-  if (exerciseSuccess || exerciseFailed) {
+    Serial.println("[FAIL] Flow > 1200 ml/s - vjezba ponistena");
     return;
   }
 
-  if (flow >= FLOW_LIMIT) {
-    exerciseFailed = true;
-    stableTimerRunning = false;
-    Serial.println("POKUSAJ PONISTEN: protok je presao 1200 ml/s.");
-    Serial.print("Volumen prije ponistenja: ");
-    Serial.print(totalVolume, 1);
-    Serial.println(" ml");
-    return;
-  }
+  bool stableSignal = abs(flow - previousFlow) < 40;
+  bool inZone = flow >= FLOW_LEVEL_2 && flow < FLOW_LIMIT && stableSignal;
 
-  bool inTargetZone = flow >= FLOW_LEVEL_2 && flow < FLOW_LIMIT;
-
-  if (inTargetZone) {
-    if (!stableTimerRunning) {
-      stableTimerRunning = true;
-      stableStartTime = millis();
+  if (inZone)
+  {
+    if (!stable)
+    {
+      stable = true;
+      stableStart = millis();
+      Serial.println("[INFO] Stabilna zona zapoceta");
     }
 
-    unsigned long stableDuration = millis() - stableStartTime;
+    float stableTime = millis() - stableStart;
 
-    if (stableDuration >= REQUIRED_STABLE_TIME_MS) {
-      exerciseSuccess = true;
-      Serial.println("VJEZBA USPJESNA: protok je stabilan 5 sekundi.");
-      Serial.print("Ukupni volumen: ");
+    if (stableTime >= REQUIRED_STABLE_MS)
+    {
+      success = true;
+      Serial.println("[SUCCESS] 5s stabilnog protoka postignuto");
+      Serial.print("Total volume: ");
       Serial.print(totalVolume, 1);
       Serial.println(" ml");
     }
-  } else {
-    stableTimerRunning = false;
-    stableStartTime = 0;
+  }
+  else
+  {
+    if (stable)
+      Serial.println("[INFO] Stabilnost prekinuta");
+
+    stable = false;
+  }
+
+  previousFlow = flow;
+
+  totalVolume += flow * dt;
+}
+
+// ================= WINDMILL =================
+void updateWindmill(float flow)
+{
+  float targetSpeed = map(constrain(flow, 0, 1200), 0, 1200, 0, 100);
+
+  currentSpeed += (targetSpeed - currentSpeed) * 0.08;
+
+  int delayTime = 500 - currentSpeed * 4;
+  delayTime = constrain(delayTime, 40, 500);
+
+  if (millis() - lastAnim > delayTime)
+  {
+    frame = (frame + 1) % 4;
+    lastAnim = millis();
   }
 }
 
-void printStatus(int rawValue, String direction, float rawFlow, float smoothFlow) {
-  String zone = getFlowZone(smoothFlow);
+// ================= DRAW WINDMILL =================
+void drawWindmill(int x, int y)
+{
+  display.drawLine(x, y, x, y + 20, SSD1306_WHITE);
 
-  Serial.print("ADC: ");
-  Serial.print(rawValue);
-
-  Serial.print(" | Smjer: ");
-  Serial.print(direction);
-
-  Serial.print(" | Sirovi protok: ");
-  Serial.print(rawFlow, 1);
-
-  Serial.print(" ml/s | Filtrirani protok: ");
-  Serial.print(smoothFlow, 1);
-
-  Serial.print(" ml/s | Zona: ");
-  Serial.print(zone);
-
-  Serial.print(" | Volumen: ");
-  Serial.print(totalVolume, 1);
-  Serial.print(" ml");
-
-  if (stableTimerRunning && !exerciseSuccess && !exerciseFailed) {
-    float stableSeconds = (millis() - stableStartTime) / 1000.0;
-    Serial.print(" | Stabilno: ");
-    Serial.print(stableSeconds, 1);
-    Serial.print(" s");
+  if (frame == 0)
+  {
+    display.drawLine(x, y, x, y - 10, SSD1306_WHITE);
+    display.drawLine(x, y, x + 10, y, SSD1306_WHITE);
+    display.drawLine(x, y, x, y + 10, SSD1306_WHITE);
+    display.drawLine(x, y, x - 10, y, SSD1306_WHITE);
+  }
+  else if (frame == 1)
+  {
+    display.drawLine(x, y, x + 7, y - 7, SSD1306_WHITE);
+    display.drawLine(x, y, x + 7, y + 7, SSD1306_WHITE);
+    display.drawLine(x, y, x - 7, y + 7, SSD1306_WHITE);
+    display.drawLine(x, y, x - 7, y - 7, SSD1306_WHITE);
+  }
+  else if (frame == 2)
+  {
+    display.drawLine(x, y, x, y - 10, SSD1306_WHITE);
+    display.drawLine(x, y, x + 10, y, SSD1306_WHITE);
+    display.drawLine(x, y, x, y + 10, SSD1306_WHITE);
+    display.drawLine(x, y, x - 10, y, SSD1306_WHITE);
+  }
+  else
+  {
+    display.drawLine(x, y, x + 7, y - 7, SSD1306_WHITE);
+    display.drawLine(x, y, x + 7, y + 7, SSD1306_WHITE);
+    display.drawLine(x, y, x - 7, y + 7, SSD1306_WHITE);
+    display.drawLine(x, y, x - 7, y - 7, SSD1306_WHITE);
   }
 
-  if (exerciseSuccess) {
-    Serial.print(" | STATUS: USPJEH");
-  }
-
-  if (exerciseFailed) {
-    Serial.print(" | STATUS: NEUSPJEH");
-  }
-
-  Serial.println();
+  display.fillCircle(x, y, 2, SSD1306_WHITE);
 }
 
-void setup() {
+void drawBrokenWindmill(int x, int y)
+{
+  display.drawLine(x, y, x + 12, y + 22, SSD1306_WHITE);
+
+  display.drawLine(x, y, x - 6, y - 8, SSD1306_WHITE);
+  display.drawLine(x, y, x + 3, y + 9, SSD1306_WHITE);
+
+  display.drawLine(x - 10, y + 5, x - 14, y + 10, SSD1306_WHITE);
+  display.drawLine(x + 10, y - 6, x + 14, y - 12, SSD1306_WHITE);
+
+  display.drawPixel(x + 8, y + 12, SSD1306_WHITE);
+  display.drawPixel(x - 12, y + 6, SSD1306_WHITE);
+
+  display.drawLine(x - 6, y, x + 6, y, SSD1306_WHITE);
+
+  display.fillCircle(x, y, 2, SSD1306_WHITE);
+}
+
+// ================= OLED =================
+void drawOLED(float flow)
+{
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  display.print("BreathMill");
+
+  display.setCursor(0, 10);
+  display.print("Flow:");
+  display.print((int)flow);
+
+  display.setCursor(0, 20);
+  if (flow < 600) display.print("LOW");
+  else if (flow < 900) display.print("MED");
+  else if (flow < 1200) display.print("TARGET");
+  else display.print("DANGER");
+
+  display.setCursor(0, 30);
+  if (stable)
+    display.print((millis() - stableStart) / 1000.0);
+  else
+    display.print("0.0");
+
+  display.print("s");
+
+  display.setCursor(0, 40);
+  display.print("V:");
+  display.print((int)totalVolume);
+
+  display.drawRect(118, 5, 8, 50, SSD1306_WHITE);
+  display.drawRect(118, 20, 8, 12, SSD1306_WHITE);
+
+  int markerY = map(constrain(flow, 0, 1200), 0, 1200, 50, 5);
+  display.fillRect(119, markerY, 6, 3, SSD1306_WHITE);
+
+  if (brokenWindmill)
+  {
+    drawBrokenWindmill(90, 28);
+  }
+  else
+  {
+    drawWindmill(90, 28);
+  }
+
+  if (success)
+  {
+    display.setCursor(70, 54);
+    display.print("SUCCESS");
+  }
+
+  if (failed)
+  {
+    display.setCursor(70, 54);
+    display.print("FAIL");
+  }
+
+  display.display();
+}
+
+// ================= SETUP =================
+void setup()
+{
   Serial.begin(115200);
-  delay(500);
 
-  Serial.println("BreathMill - volumen i logika vjezbe");
+  pinMode(RESET_BTN, INPUT_PULLUP);
+
+  Wire.begin();
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
+    while (true);
+
+  display.clearDisplay();
+  display.display();
 }
 
-void loop() {
-  unsigned long currentTime = millis();
+// ================= LOOP =================
+void loop()
+{
+  // RESET BUTTON
+  if (digitalRead(RESET_BTN) == LOW)
+  {
+    resetExercise();
+    Serial.println("[RESET] Novi pokusaj pokrenut");
+    delay(200);
+  }
 
-  if (currentTime - lastSampleTime >= SAMPLE_INTERVAL_MS) {
-    float deltaTimeSeconds = (currentTime - lastSampleTime) / 1000.0;
-    lastSampleTime = currentTime;
+  unsigned long now = millis();
 
-    int rawValue = analogRead(POT_PIN);
+  if (now - lastSample >= SAMPLE_MS)
+  {
+    float dt = (now - lastSample) / 1000.0;
+    lastSample = now;
 
-    float rawFlow = calculateFlow(rawValue);
-    float smoothFlow = applyEmaFilter(rawFlow);
-    String direction = getDirection(rawValue);
+    int raw = analogRead(POT_PIN);
 
-    updateVolume(smoothFlow, deltaTimeSeconds, direction);
-    updateExerciseState(smoothFlow);
-    printStatus(rawValue, direction, rawFlow, smoothFlow);
+    float flow = ema(calculateFlow(raw));
+
+    Serial.print("RAW: ");
+    Serial.print(raw);
+
+    Serial.print(" | FLOW: ");
+    Serial.print(flow);
+
+    Serial.print(" | ZONE: ");
+
+    if (flow < 600) Serial.print("LOW");
+    else if (flow < 900) Serial.print("MED");
+    else if (flow < 1200) Serial.print("TARGET");
+    else Serial.print("DANGER");
+
+    Serial.print(" | VOL: ");
+    Serial.print(totalVolume, 1);
+
+    if (stable)
+    {
+      Serial.print(" | STABLE: ");
+      Serial.print((millis() - stableStart) / 1000.0, 1);
+      Serial.print("s");
+    }
+
+    if (success) Serial.print(" | SUCCESS");
+    if (failed) Serial.print(" | FAIL");
+
+    Serial.println();
+
+    updateLogic(flow, dt);
+    updateWindmill(flow);
+
+    drawOLED(flow);
   }
 }
