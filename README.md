@@ -22,10 +22,10 @@ Sustav mora omogućiti:
 - prikaz trenutnog protoka na OLED zaslonu
 - prikaz tri razine protoka: 600 ml/s, 900 ml/s i 1200 ml/s
 - prikaz indikatora stabilnosti protoka
-- praćenje trajanja stabilnog izdisaja
+- praćenje trajanja stabilnog udisaja
 - detekciju uspješne vježbe ako je protok stabilan najmanje 5 sekundi
 - poništavanje pokušaja ako protok prijeđe 1200 ml/s
-- izračun ukupnog volumena izdisaja numeričkom integracijom protoka kroz vrijeme
+- izračun ukupnog volumena udisaja numeričkom integracijom protoka kroz vrijeme
 - prikaz rezultata korisnika nakon završetka pokušaja
 - prikaz animirane vjetrenjače čija se brzina mijenja ovisno o protoku daha
 
