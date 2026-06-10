@@ -85,7 +85,11 @@ void updateLogic(float flow, float dt)
     failed = true;
     brokenWindmill = true;
 
-    Serial.println("[FAIL] Flow > 1200 ml/s - vjezba ponistena");
+    stable = false;
+    Serial.println("POKUSAJ PONISTEN: protok je presao 1200 ml/s.");
+    Serial.print("Volumen prije ponistenja: ");
+    Serial.print(totalVolume, 1);
+    Serial.println(" ml"); 
     return;
   }
 
@@ -106,18 +110,17 @@ void updateLogic(float flow, float dt)
     if (stableTime >= REQUIRED_STABLE_MS)
     {
       success = true;
-      Serial.println("[SUCCESS] 5s stabilnog protoka postignuto");
-      Serial.print("Total volume: ");
-      Serial.print(totalVolume, 1);
-      Serial.println(" ml");
-    }
+      Serial.println("VJEZBA USPJESNA: protok je stabilan 5 sekundi.");
+      Serial.print("Ukupni volumen: ");
+      Serial.print(totalVolume, 1); Serial.println(" ml");
+     }
   }
   else
   {
     if (stable)
       Serial.println("[INFO] Stabilnost prekinuta");
-
-    stable = false;
+      stable = false;
+      stableStart = 0;
   }
 
   previousFlow = flow;
@@ -260,6 +263,66 @@ void drawOLED(float flow)
   display.display();
 }
 
+void printStatus(
+    int rawValue,
+    float rawFlow,
+    float smoothFlow)
+{
+  Serial.print("ADC: ");
+  Serial.print(rawValue);
+
+  Serial.print(" | Smjer: ");
+
+  int offset = rawValue - ADC_CENTER;
+
+  if (abs(offset) < DEAD_ZONE)
+    Serial.print("MIROVANJE");
+  else if (offset > 0)
+    Serial.print("UDAH");
+  else
+    Serial.print("IZDAH");
+
+  Serial.print(" | Sirovi protok: ");
+  Serial.print(rawFlow, 1);
+
+  Serial.print(" ml/s");
+
+  Serial.print(" | Filtrirani protok: ");
+  Serial.print(smoothFlow, 1);
+
+  Serial.print(" ml/s");
+
+  Serial.print(" | Zona: ");
+
+  if (smoothFlow < FLOW_LEVEL_1)
+    Serial.print("LOW");
+  else if (smoothFlow < FLOW_LEVEL_2)
+    Serial.print("MED");
+  else if (smoothFlow < FLOW_LIMIT)
+    Serial.print("TARGET");
+  else
+    Serial.print("DANGER");
+
+  Serial.print(" | Volumen: ");
+  Serial.print(totalVolume, 1);
+  Serial.print(" ml");
+
+  if (stable)
+  {
+    Serial.print(" | Stabilno: ");
+    Serial.print((millis() - stableStart) / 1000.0, 1);
+    Serial.print(" s");
+  }
+
+  if (success)
+    Serial.print(" | STATUS: USPJEH");
+
+  if (failed)
+    Serial.print(" | STATUS: NEUSPJEH");
+
+  Serial.println();
+}
+
 // ================= SETUP =================
 void setup()
 {
@@ -296,36 +359,15 @@ void loop()
 
     int raw = analogRead(POT_PIN);
 
-    float flow = ema(calculateFlow(raw));
+    float rawFlow = calculateFlow(raw);
 
-    Serial.print("RAW: ");
-    Serial.print(raw);
+    float flow = ema(rawFlow);
 
-    Serial.print(" | FLOW: ");
-    Serial.print(flow);
-
-    Serial.print(" | ZONE: ");
-
-    if (flow < 600) Serial.print("LOW");
-    else if (flow < 900) Serial.print("MED");
-    else if (flow < 1200) Serial.print("TARGET");
-    else Serial.print("DANGER");
-
-    Serial.print(" | VOL: ");
-    Serial.print(totalVolume, 1);
-
-    if (stable)
-    {
-      Serial.print(" | STABLE: ");
-      Serial.print((millis() - stableStart) / 1000.0, 1);
-      Serial.print("s");
-    }
-
-    if (success) Serial.print(" | SUCCESS");
-    if (failed) Serial.print(" | FAIL");
-
-    Serial.println();
-
+    printStatus(
+        raw,
+        rawFlow,
+        flow);
+    
     updateLogic(flow, dt);
     updateWindmill(flow);
 

@@ -1,4 +1,4 @@
 [wokwi]
 version = 1
-firmware = "build/sketch.ino.bin"
-elf = "build/sketch.ino.elf"
+firmware = "build/breathmill_sketch.ino.bin"
+elf = "build/breathmill_sketch.ino.elf"

@@ -1,17 +1,37 @@
 {
   "version": 1,
-  "author": "Anonymous maker",
+  "author": "Antonio Rafajec",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
-    { "type": "wokwi-potentiometer", "id": "pot1", "top": -49.3, "left": -182.6, "attrs": {} }
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -28.8, "left": -23.96, "attrs": {} },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -35.26,
+      "left": -249.37,
+      "attrs": { "i2cAddress": "0x3c" }
+    },
+    { "type": "wokwi-potentiometer", "id": "pot1", "top": 85.1, "left": -153.8, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 54.2,
+      "left": 124.8,
+      "attrs": { "color": "green", "xray": "1" }
+    }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
     [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "pot1:VCC", "esp:3V3", "red", [ "v0" ] ],
-    [ "esp:GND.1", "pot1:GND", "black", [ "h0" ] ],
-    [ "esp:34", "pot1:SIG", "green", [ "h0" ] ]
+    [ "oled1:VCC", "esp:3V3", "red", [ "v-67.2", "h182.55", "v96" ] ],
+    [ "oled1:GND", "esp:GND.2", "black", [ "v-76.8", "h288" ] ],
+    [ "esp:21", "oled1:SDA", "green", [ "h28.8", "v-38.4", "v-67.2", "h-288.07" ] ],
+    [ "oled1:SCL", "esp:22", "green", [ "v-57.6", "h278.7", "v105.6" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "v28.8", "h86.4", "v-57.6" ] ],
+    [ "pot1:SIG", "esp:34", "green", [ "h-0.4", "v19.2", "h67.2", "v-134.4" ] ],
+    [ "pot1:VCC", "esp:3V3", "red", [ "v9.6", "h47.2", "v-163.2" ] ],
+    [ "btn1:1.l", "esp:25", "green", [ "h-19.2" ] ],
+    [ "btn1:2.l", "esp:GND.2", "green", [ "h0" ] ]
   ],
   "dependencies": {}
 }
