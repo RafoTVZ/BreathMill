@@ -362,15 +362,15 @@ void loop()
     float rawFlow = calculateFlow(raw);
 
     float flow = ema(rawFlow);
-
-    printStatus(
-        raw,
-        rawFlow,
-        flow);
     
     updateLogic(flow, dt);
     updateWindmill(flow);
 
     drawOLED(flow);
+
+    printStatus(
+        raw,
+        rawFlow,
+        flow);
   }
 }
