@@ -54,7 +54,8 @@ Osnovni koraci za pokretanje:
 
 ## Članovi tima
 
-- Antonio Rafajec, Antonela Miletić – razvoj programskog rješenja, dokumentacija, Wokwi simulacija, OLED prikaz, testiranje
+* Antonio Rafajec – OLED prikaz, prikaz vjetrenjače, Wokwi shema, projektna dokumentacija/Wiki
+* Antonela Miletić – logika vježbe, očitanje potenciometra, mapiranje ADC vrijednosti na protok, filtriranje signala, uvjeti uspjeha/neuspjeha, izračun volumena i testiranje osnovne logike
 
 ## Link na projekt
 
