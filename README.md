@@ -1,6 +1,6 @@
 # BreathMill – IoT vjetrenjača za trening stabilnog daha
 
-> BreathMill je projekt digitalnog spirometra razvijen u sklopu kolegija Razvoj ugradbenih sustava. Cilj projekta je kroz jednostavan i vizualno razumljiv scenarij vjetrenjače pomoći korisniku u vježbanju stabilnog i kontroliranog izdisaja.
+> BreathMill je projekt digitalnog spirometra razvijen u sklopu kolegija Razvoj ugradbenih sustava. Cilj projekta je kroz jednostavan i vizualno razumljiv scenarij vjetrenjače pomoći korisniku u vježbanju stabilnog i kontroliranog udisaja.
 
 ## Opis projekta
 
