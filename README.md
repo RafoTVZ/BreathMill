@@ -1,6 +1,6 @@
 # BreathMill – IoT vjetrenjača za trening stabilnog daha
 
-> BreathMill je projekt digitalnog spirometra razvijen u sklopu kolegija Razvoj ugradbenih sustava. Cilj projekta je kroz jednostavan i vizualno razumljiv scenarij vjetrenjače pomoći korisniku u vježbanju stabilnog i kontroliranog izdisaja.
+> BreathMill je projekt digitalnog spirometra razvijen u sklopu kolegija Razvoj ugradbenih sustava. Cilj projekta je kroz jednostavan i vizualno razumljiv scenarij vjetrenjače pomoći korisniku u vježbanju stabilnog i kontroliranog udisaja.
 
 ## Opis projekta
 
@@ -22,10 +22,10 @@ Sustav mora omogućiti:
 - prikaz trenutnog protoka na OLED zaslonu
 - prikaz tri razine protoka: 600 ml/s, 900 ml/s i 1200 ml/s
 - prikaz indikatora stabilnosti protoka
-- praćenje trajanja stabilnog izdisaja
+- praćenje trajanja stabilnog udisaja
 - detekciju uspješne vježbe ako je protok stabilan najmanje 5 sekundi
 - poništavanje pokušaja ako protok prijeđe 1200 ml/s
-- izračun ukupnog volumena izdisaja numeričkom integracijom protoka kroz vrijeme
+- izračun ukupnog volumena udisaja numeričkom integracijom protoka kroz vrijeme
 - prikaz rezultata korisnika nakon završetka pokušaja
 - prikaz animirane vjetrenjače čija se brzina mijenja ovisno o protoku daha
 
@@ -54,7 +54,8 @@ Osnovni koraci za pokretanje:
 
 ## Članovi tima
 
-- Antonio Rafajec, Antonela Miletić – razvoj programskog rješenja, dokumentacija, Wokwi simulacija, OLED prikaz, testiranje
+* Antonio Rafajec – OLED prikaz, prikaz vjetrenjače, Wokwi shema, projektna dokumentacija/Wiki
+* Antonela Miletić – logika vježbe, očitanje potenciometra, mapiranje ADC vrijednosti na protok, filtriranje signala, uvjeti uspjeha/neuspjeha, izračun volumena i testiranje osnovne logike
 
 ## Link na projekt
 
